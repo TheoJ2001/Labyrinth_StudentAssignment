@@ -6,24 +6,21 @@ public static class PathfindingAlgorithm
 {
 	public static List<Vector2Int> FindShortestPath(Vector2Int start, Vector2Int goal, IMapData mapData)
 	{
-		List<Vector2Int> vertecies = new();
+		WeightedDigraph<Vector2Int> graph = new(mapData.Width * mapData.Height);
 		foreach (int x in Enumerable.Range(0, mapData.Width))
 			foreach (int y in Enumerable.Range(0, mapData.Height))
-				vertecies.Add(new Vector2Int(x, y));
+				graph.AddVertex(new Vector2Int(x, y));
 
-		WeightedDigraph<Vector2Int> graph = new(vertecies);
-		foreach (Vector2Int vertex in vertecies)
+		foreach (Vector2Int vertex in graph.VertexData)
 			CreateEdges(graph, vertex, mapData);
 
 		int startVertex = graph.GetVertex(start);
 		int goalVertex = graph.GetVertex(goal);
 
 		var paths = new Dijkstras(graph, startVertex).Paths;
-		var connectingEdge = paths[goalVertex];
-		if (connectingEdge.IsNull) return null;
+		if (paths[goalVertex].IsNull) return null;
 
 		List<Vector2Int> finalPath = new();
-
 		int currentVertex = goalVertex;
 		while (currentVertex != startVertex)
 		{

@@ -1,12 +1,11 @@
-
-using System;
-using System.Collections.Generic;
+using System.Linq;
 
 public class Dijkstras
 {
 	private readonly IndexedPriorityQueue<double> m_PriorityQueue;
 	private readonly Edge[] m_EdgeTo;
 	private readonly double[] m_DistTo;
+	public Edge[] Paths => m_EdgeTo;
 
 	public Dijkstras(IWeightedDigraph graph, int startVertex)
 	{
@@ -14,19 +13,19 @@ public class Dijkstras
 		m_DistTo = new double[graph.V];
 		m_PriorityQueue = new();
 
-		Array.Fill(m_DistTo, double.PositiveInfinity);
-		Array.Fill(m_EdgeTo, Edge.NullEdge);
-		m_DistTo[startVertex] = 0;
-
-		m_PriorityQueue[startVertex] = 0;
-		while (m_PriorityQueue.TryDeque(out var element))
+		foreach (int v in Enumerable.Range(0, graph.V))
 		{
-			(int v, _) = element;
+			m_DistTo[v] = double.PositiveInfinity;
+			m_EdgeTo[v] = Edge.NullEdge;
+		}
+
+		m_DistTo[startVertex] = 0;
+		m_PriorityQueue[startVertex] = 0;
+
+		while (m_PriorityQueue.TryDeque(out int v))
 			foreach (Edge e in graph.AdjacentEdges(v))
 				Relax(e);
-		}
 	}
-	public Edge[] Paths => m_EdgeTo;
 
 	private void Relax(Edge e)
 	{

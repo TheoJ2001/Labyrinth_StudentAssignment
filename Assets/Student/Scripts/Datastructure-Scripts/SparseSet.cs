@@ -12,7 +12,7 @@ public class SparseSet<T> : IEnumerable<KeyValuePair<int, T>>, IEnumerable<T>
 	private readonly List<int> m_Indecies;
 	private readonly int m_PageSize;
 
-	public SparseSet(int pageSize = 128)
+	public SparseSet(int pageSize = 32)
 	{
 		Debug.Assert(pageSize >= 1);
 		m_PageSize = pageSize;
@@ -141,18 +141,10 @@ public class SparseSet<T> : IEnumerable<KeyValuePair<int, T>>, IEnumerable<T>
 		m_Indecies.Add(idx);
 		m_Sparse[idx / m_PageSize][idx % m_PageSize] = Count - 1;
 	}
-	public IEnumerator<KeyValuePair<int, T>> GetEnumerator()
-	{
-		return new SparseEnumerator(m_Dense, m_Indecies);
-	}
 
-	IEnumerator IEnumerable.GetEnumerator()
-	{
-		return GetEnumerator();
-	}
-
+	public IEnumerator<KeyValuePair<int, T>> GetEnumerator() => new SparseEnumerator(m_Dense, m_Indecies);
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 	IEnumerator<T> IEnumerable<T>.GetEnumerator() => m_Dense.GetEnumerator();
-
 
 	public class SparseEnumerator : IEnumerator<KeyValuePair<int, T>>
 	{

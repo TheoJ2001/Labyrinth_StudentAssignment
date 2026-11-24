@@ -7,50 +7,51 @@ public interface IWeightedDigraph
 	int V { get; }
 	int E { get; }
 	IEnumerable<Edge> AdjacentEdges(int v);
-	void AddEdge(int v, int w, double weight);
 }
 public class WeightedDigraph<T> : IWeightedDigraph
 	where T : IEquatable<T>
 {
-	public WeightedDigraph(IEnumerable<T> vertecies)
+	public WeightedDigraph(int capacity)
 	{
-		m_VertexData = vertecies.ToArray();
-		m_Adjacency = new Bag<Edge>[vertecies.Count()];
-		Array.Fill(m_Adjacency, new());
+		m_VertexLookup = new(capacity);
+		m_VertexData = new(capacity);
+		m_Adjacency = new(capacity);
 	}
 
-	private readonly Bag<Edge>[] m_Adjacency;
-	private readonly T[] m_VertexData;
+	private readonly List<Bag<Edge>> m_Adjacency;
+	private readonly List<T> m_VertexData;
+	private readonly Dictionary<T, int> m_VertexLookup;
 
-	public int V => m_Adjacency.Length;
-	public int E => (from adj in m_Adjacency select adj.Count).Count();
-	public void AddEdge(int v, int w, double weight)
+	public int V => m_Adjacency.Count;
+	public int E => m_Adjacency.Sum(adj => adj.Count);
+
+	public void AddVertex(T v)
 	{
-		var edge = new Edge(v, w, weight);
-		if (!m_Adjacency[v].Contains(edge))
-			m_Adjacency[v].Add(edge);
+		if (!m_VertexLookup.TryGetValue(v, out _))
+		{
+			m_VertexLookup[v] = V;
+			m_VertexData.Add(v);
+			m_Adjacency.Add(new());
+		}
 	}
+
+	private void AddEdge(int v, int w, double weight) => m_Adjacency[v].Add(new(v, w, weight));
 	public void AddEdge(T v, T w, double weight)
 	{
-		int vIdx = GetVertex(v);
-		int wIdx = GetVertex(w);
-		if (vIdx == -1 || wIdx == -1) return;
-		AddEdge(vIdx, wIdx, weight);
+		if (m_VertexLookup.TryGetValue(v, out int vIdx) &&
+				m_VertexLookup.TryGetValue(w, out int wIdx))
+			AddEdge(vIdx, wIdx, weight);
 	}
 
-	public int GetVertex(T vertexData)
-	{
-		return Array.IndexOf(m_VertexData, vertexData);
-	}
-
-
-	public T[] VertexData => m_VertexData;
 	public IEnumerable<Edge> AdjacentEdges(int v)
 	{
-		if (v > m_Adjacency.Length || v < 0)
+		if (v > m_Adjacency.Count || v < 0)
 			return Enumerable.Empty<Edge>();
 		return m_Adjacency[v];
 	}
+
+	public int GetVertex(T vertexData) => m_VertexLookup[vertexData];
+	public T[] VertexData => m_VertexData.ToArray();
 }
 
 

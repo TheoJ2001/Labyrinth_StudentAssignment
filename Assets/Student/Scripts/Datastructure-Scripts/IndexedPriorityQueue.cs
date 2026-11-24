@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
 
-public class IndexedPriorityQueue<T>
-	where T : IEquatable<T>
+public class IndexedPriorityQueue<Priority>
+	where Priority : IEquatable<Priority>
 {
-	private readonly SparseSet<T> m_Keys = new();
+	private readonly SparseSet<Priority> m_Keys = new();
 	private readonly List<int> m_Heap = new();
-	private readonly IComparer<T> m_Comparer;
+	private readonly IComparer<Priority> m_Comparer;
 	public int Count { get; private set; } = 0;
-	public IndexedPriorityQueue(IComparer<T> comparer = null)
+	public bool IsEmpty => Count == 0;
+	public IndexedPriorityQueue(IComparer<Priority> comparer = null)
 	{
-		m_Comparer = comparer ?? Comparer<T>.Default;  //the default Comparer<T> turns the binary heap into a min binary heap
+		m_Comparer = comparer ?? Comparer<Priority>.Default;  //the default Comparer<T> turns the binary heap into a min binary heap
 	}
 
-	public T this[int idx]
+	public Priority this[int idx]
 	{
 		get => m_Keys[idx];
 		set
@@ -29,26 +30,45 @@ public class IndexedPriorityQueue<T>
 		}
 	}
 
-	public KeyValuePair<int, T> Dequeue()
+	public int Dequeue()
 	{
 		int topIdx = m_Heap[0];
-		T topKey = m_Keys[topIdx];
 		m_Keys.Delete(topIdx);
 		Exchange(0, --Count);
 		m_Heap.RemoveAt(Count);
 		Sink(0);
-		return new(topIdx, topKey);
+		return topIdx;
 	}
 
-	public bool TryDeque(out KeyValuePair<int, T> key)
+	public bool TryDeque(out int idx)
+	{
+		idx = -1;
+		if (Count == 0) return false;
+		idx = Dequeue();
+		return true;
+	}
+
+
+	public KeyValuePair<int, Priority> DequeueWithPriority()
+	{
+		int topIdx = m_Heap[0];
+		Priority topPriority = m_Keys[topIdx];
+		m_Keys.Delete(topIdx);
+		Exchange(0, --Count);
+		m_Heap.RemoveAt(Count);
+		Sink(0);
+		return new(topIdx, topPriority);
+	}
+
+	public bool TryDequeueWithPriority(out KeyValuePair<int, Priority> key)
 	{
 		key = default;
 		if (Count == 0) return false;
-		key = Dequeue();
+		key = DequeueWithPriority();
 		return true;
 	}
-	public bool IsEmpty => m_Keys.Count == 0;
-	public void Insert(int idx, T key)
+
+	public void Insert(int idx, Priority key)
 	{
 		if (m_Keys.Contains(idx)) return;
 		Count++;
@@ -56,18 +76,19 @@ public class IndexedPriorityQueue<T>
 		m_Heap.Add(idx);
 		Swim(m_Heap.Count - 1);
 	}
-	public void DecreaseKey(int idx, T newKey)
+	public void DecreaseKey(int idx, Priority newKey)
 	{
 		if (!m_Keys.Contains(idx)) return;
 		m_Keys[idx] = newKey;
 		Sink(idx);
 	}
-	public void IncreaseKey(int idx, T newKey)
+	public void IncreaseKey(int idx, Priority newKey)
 	{
 		if (!m_Keys.Contains(idx)) return;
 		m_Keys[idx] = newKey;
 		Swim(idx);
 	}
+
 	private bool HasHigherPriority(int a, int b) => m_Comparer.Compare(m_Keys[m_Heap[a]], m_Keys[m_Heap[b]]) < 0;
 	private void Exchange(int i, int j)
 	{
