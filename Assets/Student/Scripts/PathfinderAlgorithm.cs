@@ -28,6 +28,7 @@ public static class PathfindingAlgorithm
 			finalPath.Add(graph.VertexData[e.W]);
 			currentVertex = e.V;
 		}
+		finalPath.Add(graph.VertexData[startVertex]);
 		finalPath.Reverse();
 
 		return finalPath;
@@ -42,7 +43,7 @@ public static class PathfindingAlgorithm
 		right = new(pos.x + 1, pos.y);
 
 		if (!IsMovementBlocked(pos, up, mapData))
-			graph.AddEdge(pos, up, mapData.GetHorizontalWallCost(pos.x, pos.y));
+			graph.AddEdge(pos, up, mapData.GetHorizontalWallCost(up.x, up.y));
 
 		if (!IsMovementBlocked(pos, down, mapData))
 			graph.AddEdge(pos, down, mapData.GetHorizontalWallCost(pos.x, pos.y));
@@ -51,7 +52,7 @@ public static class PathfindingAlgorithm
 			graph.AddEdge(pos, left, mapData.GetVerticalWallCost(pos.x, pos.y));
 
 		if (!IsMovementBlocked(pos, right, mapData))
-			graph.AddEdge(pos, right, mapData.GetVerticalWallCost(pos.x, pos.y));
+			graph.AddEdge(pos, right, mapData.GetVerticalWallCost(right.x, right.y));
 
 		var jumps = mapData.GetJumpsFrom(pos);
 		foreach (var jump in jumps)

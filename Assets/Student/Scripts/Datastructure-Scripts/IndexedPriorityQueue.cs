@@ -4,7 +4,8 @@ using System.Collections.Generic;
 public class IndexedPriorityQueue<Priority>
 	where Priority : IEquatable<Priority>
 {
-	private readonly SparseSet<Priority> m_Keys = new();
+	private readonly SparseSet<Priority> m_Priorities = new();
+	private readonly SparseSet<int> m_HeapPositions = new();
 	private readonly List<int> m_Heap = new();
 	private readonly IComparer<Priority> m_Comparer;
 	public int Count { get; private set; } = 0;
@@ -16,16 +17,16 @@ public class IndexedPriorityQueue<Priority>
 
 	public Priority this[int idx]
 	{
-		get => m_Keys[idx];
+		get => m_Priorities[idx];
 		set
 		{
 			if (value is null) return;
-			if (!m_Keys.Contains(idx)) Insert(idx, value);
+			if (!m_Priorities.Contains(idx)) Insert(idx, value);
 			else
 			{
-				var cmp = m_Comparer.Compare(value, m_Keys[idx]);
-				if (cmp < 0) DecreaseKey(idx, value);
-				else if (cmp > 0) IncreaseKey(idx, value);
+				var cmp = m_Comparer.Compare(m_Priorities[idx], value);
+				if (cmp > 0) IncreasePriority(idx, value);
+				else if (cmp < 0) DecreasePriority(idx, value);
 			}
 		}
 	}
@@ -33,7 +34,8 @@ public class IndexedPriorityQueue<Priority>
 	public int Dequeue()
 	{
 		int topIdx = m_Heap[0];
-		m_Keys.Delete(topIdx);
+		m_Priorities.Delete(topIdx);
+		m_HeapPositions.Delete(topIdx);
 		Exchange(0, --Count);
 		m_Heap.RemoveAt(Count);
 		Sink(0);
@@ -48,51 +50,34 @@ public class IndexedPriorityQueue<Priority>
 		return true;
 	}
 
-
-	public KeyValuePair<int, Priority> DequeueWithPriority()
-	{
-		int topIdx = m_Heap[0];
-		Priority topPriority = m_Keys[topIdx];
-		m_Keys.Delete(topIdx);
-		Exchange(0, --Count);
-		m_Heap.RemoveAt(Count);
-		Sink(0);
-		return new(topIdx, topPriority);
-	}
-
-	public bool TryDequeueWithPriority(out KeyValuePair<int, Priority> key)
-	{
-		key = default;
-		if (Count == 0) return false;
-		key = DequeueWithPriority();
-		return true;
-	}
-
 	public void Insert(int idx, Priority key)
 	{
-		if (m_Keys.Contains(idx)) return;
-		Count++;
-		m_Keys[idx] = key;
+		if (m_Priorities.Contains(idx)) return;
+		m_Priorities[idx] = key;
 		m_Heap.Add(idx);
-		Swim(m_Heap.Count - 1);
+		m_HeapPositions[idx] = Count;
+		Count++;
+		Swim(Count - 1);
 	}
-	public void DecreaseKey(int idx, Priority newKey)
+	public void IncreasePriority(int idx, Priority newPriority)
 	{
-		if (!m_Keys.Contains(idx)) return;
-		m_Keys[idx] = newKey;
-		Sink(idx);
+		if (!m_Priorities.Contains(idx)) return;
+		m_Priorities[idx] = newPriority;
+		Swim(m_HeapPositions[idx]);
 	}
-	public void IncreaseKey(int idx, Priority newKey)
+	public void DecreasePriority(int idx, Priority newPriority)
 	{
-		if (!m_Keys.Contains(idx)) return;
-		m_Keys[idx] = newKey;
-		Swim(idx);
+		if (!m_Priorities.Contains(idx)) return;
+		m_Priorities[idx] = newPriority;
+		Sink(m_HeapPositions[idx]);
 	}
 
-	private bool HasHigherPriority(int a, int b) => m_Comparer.Compare(m_Keys[m_Heap[a]], m_Keys[m_Heap[b]]) < 0;
+	private bool HasHigherPriority(int a, int b) => m_Comparer.Compare(m_Priorities[m_Heap[a]], m_Priorities[m_Heap[b]]) < 0;
 	private void Exchange(int i, int j)
 	{
 		(m_Heap[i], m_Heap[j]) = (m_Heap[j], m_Heap[i]);
+		m_HeapPositions[m_Heap[i]] = i;
+		m_HeapPositions[m_Heap[j]] = j;
 	}
 
 	private void Swim(int k)
@@ -107,7 +92,6 @@ public class IndexedPriorityQueue<Priority>
 	}
 	private void Sink(int k)
 	{
-		int Count = m_Heap.Count;
 		while (2 * k + 1 < Count)
 		{
 			int j = 2 * k + 1;

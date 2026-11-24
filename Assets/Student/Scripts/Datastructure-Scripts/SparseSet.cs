@@ -12,7 +12,7 @@ public class SparseSet<T> : IEnumerable<KeyValuePair<int, T>>, IEnumerable<T>
 	private readonly List<int> m_Indecies;
 	private readonly int m_PageSize;
 
-	public SparseSet(int pageSize = 32)
+	public SparseSet(int pageSize = 128)
 	{
 		Debug.Assert(pageSize >= 1);
 		m_PageSize = pageSize;
