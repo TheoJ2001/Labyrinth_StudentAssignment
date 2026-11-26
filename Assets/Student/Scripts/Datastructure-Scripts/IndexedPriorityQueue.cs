@@ -59,12 +59,24 @@ public class IndexedPriorityQueue<Priority>
 		Count++;
 		Swim(Count - 1);
 	}
+
+	/*
+	 * When a min heap this is a DecreaseKey operation
+	 * When a max heap this is an IncreaseKey operation
+	 * IncreasePriority is an agnostic name that works in both directions
+	 * */
 	public void IncreasePriority(int idx, Priority newPriority)
 	{
 		if (!m_Priorities.Contains(idx)) return;
 		m_Priorities[idx] = newPriority;
 		Swim(m_HeapPositions[idx]);
 	}
+
+	/*
+	 * When a min heap this is an IncreaseKey operation
+	 * When a max heap this is a DecreaseKey operation
+	 * DecreasePriority is an agnostic name that works in both directions
+	 * */
 	public void DecreasePriority(int idx, Priority newPriority)
 	{
 		if (!m_Priorities.Contains(idx)) return;
